@@ -1,8 +1,6 @@
 ---
 name: arxiv-paper-get
 description: Download arXiv papers — fetches PDF + LaTeX source (.tar.gz), extracts source, creates a local workspace. Use when the user shares an arXiv URL and wants to save the paper locally.
-source: user
-visibility: public
 ---
 
 # arxiv-paper-get
@@ -20,7 +18,7 @@ a metadata file + report skeleton.
 - Any message containing an arXiv identifier like `2506.01966` or `arxiv:2506.01966`
 - The user says "save this paper" while a paper URL is in the conversation
 
-**Do NOT trigger** when the user is only asking a question *about* a paper (e.g.,
+**Do NOT trigger** when the user is only asking a question _about_ a paper (e.g.,
 "What does 2506.01966 say about…") without asking to download it.
 
 ## First-run setup (MUST do before anything else)
@@ -34,6 +32,7 @@ arxiv-paper-get --help
 If the command is **not found**, do NOT proceed silently. Tell the user:
 
 > `arxiv-paper-get` is not installed yet. Install it with:
+>
 > ```bash
 > uv tool install git+https://github.com/hao1305430263/arxiv-paper-get
 > ```
@@ -68,16 +67,16 @@ arxiv-paper-get "https://arxiv.org/abs/XXXX.XXXXX" "/path/to/custom/dir"
 
 The command prints a JSON object to stdout on success. Key fields:
 
-| Field | Description |
-|-------|-------------|
-| `paper_dir` | Path to the paper workspace |
-| `pdf_path` | Path to the downloaded PDF (or `null`) |
-| `source_path` | Path to the source tarball (or `null`) |
+| Field                | Description                                                         |
+| -------------------- | ------------------------------------------------------------------- |
+| `paper_dir`          | Path to the paper workspace                                         |
+| `pdf_path`           | Path to the downloaded PDF (or `null`)                              |
+| `source_path`        | Path to the source tarball (or `null`)                              |
 | `source_extract_dir` | Path to extracted source, typically `paper_dir/source/` (or `null`) |
-| `report_path` | Path to the report skeleton `.md` |
-| `pdf_ok` | `true` if PDF downloaded successfully |
-| `source_ok` | `true` if LaTeX source downloaded successfully |
-| `source_extracted` | `true` if source was extracted |
+| `report_path`        | Path to the report skeleton `.md`                                   |
+| `pdf_ok`             | `true` if PDF downloaded successfully                               |
+| `source_ok`          | `true` if LaTeX source downloaded successfully                      |
+| `source_extracted`   | `true` if source was extracted                                      |
 
 ### 4. Report to the user
 
@@ -91,6 +90,7 @@ After the command finishes, summarize:
 ```
 
 If the source tarball was not available (common for older papers), note it:
+
 > LaTeX source is not available for this paper — PDF only.
 
 ## Directory structure created
