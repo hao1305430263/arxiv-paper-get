@@ -100,7 +100,6 @@ The command prints a JSON summary to stdout:
 ```
 papers/{Paper Title}/
 ├── {Paper Title}.pdf          # PDF file
-├── {Paper Title}.tar.gz       # LaTeX source tarball (if available)
 ├── source/                    # Extracted LaTeX source (if available)
 │   ├── main.tex
 │   ├── sections/
@@ -108,6 +107,8 @@ papers/{Paper Title}/
 ├── metadata.json              # Full paper metadata
 └── {Paper Title}_report.md    # Report skeleton for note-taking
 ```
+
+> The LaTeX source tarball (`.tar.gz`) is auto-cleaned after successful extraction.
 
 ---
 

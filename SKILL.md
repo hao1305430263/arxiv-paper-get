@@ -98,7 +98,6 @@ If the source tarball was not available (common for older papers), note it:
 ```
 papers/{Paper Title}/
 ├── {Paper Title}.pdf          # PDF file
-├── {Paper Title}.tar.gz       # LaTeX source tarball (if available)
 ├── source/                    # Extracted LaTeX source (if available)
 │   ├── main.tex
 │   └── ...
@@ -106,12 +105,16 @@ papers/{Paper Title}/
 └── {Paper Title}_report.md    # Report skeleton for note-taking
 ```
 
+The LaTeX source tarball is **auto-cleaned** after successful extraction.
+If extraction fails, the tarball is kept for manual inspection.
+
 ## Gotchas
 
 - **TeX source** may not be available for all arXiv papers (pre-2000, some publishers).
   The tool handles this gracefully — PDF is still downloaded.
 - **Write conflicts**: the tool never overwrites an existing report file.
 - **Windows paths**: fully supported; the tool uses `pathlib.Path` throughout.
+  Path-traversal guards use `Path.relative_to()` for cross-platform safety.
 - **Offline**: the tool requires network access to `arxiv.org` and `export.arxiv.org`.
 
 ## Example session

@@ -242,13 +242,19 @@ def maybe_extract_source(source_path: Path | None, paper_dir: Path) -> Path | No
     ensure_dir(extract_dir)
     try:
         with tarfile.open(source_path, "r:*") as archive:
-            # Path-traversal guard
+            # Path-traversal guard (cross-platform — uses relative_to)
             base = extract_dir.resolve()
             for member in archive.getmembers():
                 target = (extract_dir / member.name).resolve()
-                if not str(target).startswith(str(base) + "/") and target != base:
-                    raise RuntimeError(f"Unsafe archive member path: {member.name}")
+                try:
+                    target.relative_to(base)
+                except ValueError:
+                    raise RuntimeError(
+                        f"Unsafe archive member path: {member.name}"
+                    )
             archive.extractall(extract_dir)
+        # Clean up the tarball after successful extraction
+        source_path.unlink()
         return extract_dir
     except (tarfile.TarError, RuntimeError) as exc:
         print(f"Failed to extract source tarball: {exc}", file=sys.stderr)
@@ -265,6 +271,106 @@ def write_metadata(metadata: dict[str, Any], metadata_path: Path) -> None:
         json.dumps(metadata, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
+
+
+# ---------------------------------------------------------------------------
+# Report skeleton
+# ---------------------------------------------------------------------------
+
+
+def write_report_skeleton(
+    metadata: dict[str, Any],
+    report_path: Path,
+) -> None:
+    """Create a structured Markdown report skeleton for note-taking."""
+    # Never overwrite an existing report
+    if report_path.exists():
+        return
+
+    title = metadata.get("title", "Untitled")
+    authors = ", ".join(metadata.get("authors", []))
+    abstract = metadata.get("abstract", "")
+    arxiv_id = metadata.get("arxiv_id", "")
+    published = metadata.get("published", "")
+    doi = metadata.get("doi", "")
+    categories = ", ".join(metadata.get("categories", []))
+    primary = metadata.get("primary_category", "")
+    journal_ref = metadata.get("journal_ref", "")
+
+    lines = [
+        f"# {title}",
+        "",
+        f"**arXiv ID:** [{arxiv_id}](https://arxiv.org/abs/{arxiv_id})",
+        f"**Authors:** {authors}",
+        f"**Published:** {published}",
+    ]
+    if primary:
+        lines.append(f"**Primary Category:** {primary}")
+    if categories:
+        lines.append(f"**Categories:** {categories}")
+    if journal_ref:
+        lines.append(f"**Journal Ref:** {journal_ref}")
+    if doi:
+        lines.append(f"**DOI:** [{doi}](https://doi.org/{doi})")
+
+    lines += [
+        "",
+        "---",
+        "",
+        "## Abstract",
+        "",
+        abstract,
+        "",
+        "---",
+        "",
+        "## Summary",
+        "",
+        "<!-- Write a 2-3 sentence summary of the key contribution here -->",
+        "",
+        "---",
+        "",
+        "## Core Idea",
+        "",
+        "<!-- What is the main insight or approach? -->",
+        "",
+        "---",
+        "",
+        "## Technical Details",
+        "",
+        "<!-- Key equations, algorithms, architectures, proofs -->",
+        "",
+        "---",
+        "",
+        "## Experiments & Results",
+        "",
+        "<!-- Key findings, benchmarks, ablations -->",
+        "",
+        "",
+        "---",
+        "",
+        "## Key Takeaways",
+        "",
+        "- ",
+        "- ",
+        "- ",
+        "",
+        "---",
+        "",
+        "## Questions / Open Issues",
+        "",
+        "- ",
+        "- ",
+        "",
+        "---",
+        "",
+        "## References to Follow Up",
+        "",
+        "- ",
+        "- ",
+        "",
+    ]
+
+    report_path.write_text("\n".join(lines), encoding="utf-8")
 
 
 #
@@ -359,6 +465,7 @@ def main(argv: list[str] | None = None) -> int:
     metadata["downloaded_at"] = datetime.now(timezone.utc).isoformat()
 
     write_metadata(metadata, paper_dir / "metadata.json")
+    write_report_skeleton(metadata, report_path)
 
     # --- Step 5: print result summary as JSON ---
     result = {
