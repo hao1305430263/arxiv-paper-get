@@ -1,0 +1,186 @@
+# arxiv-paper-get
+
+**Download an arXiv paper — PDF + LaTeX source — in one command.**
+
+Given an arXiv URL, `arxiv-paper-get` fetches the paper's **PDF** and **LaTeX source
+tarball in parallel**, extracts the source into a `source/` directory, and creates a
+ready-to-use local workspace with metadata and a Markdown report skeleton.
+
+---
+
+## Features
+
+- **Parallel download** — PDF and LaTeX source (`.tar.gz`) are fetched simultaneously.
+- **Auto-extract** — the source tarball is unpacked into `source/` with path-traversal
+  protection.
+- **Rich metadata** — title, authors, abstract, categories, DOI, journal ref, and more
+  are saved as `metadata.json` (sourced from the official arXiv API).
+- **Report skeleton** — a structured Markdown report is created if one doesn't already
+  exist (never overwrites).
+- **Zero dependencies** — uses only the Python standard library. No `pip install` of
+  anything else required.
+- **Cross-platform** — `pathlib.Path` throughout; Windows and Unix paths are handled
+  correctly.
+- **Graceful degradation** — if LaTeX source is not available (common for older or
+  some publisher-hosted papers), the PDF is still downloaded and the tool exits
+  cleanly.
+
+---
+
+## Installation
+
+### 1. Install the Claude Code skill
+
+```bash
+npx skills add https://github.com/<user>/arxiv-paper-get
+```
+
+### 2. Install the Python CLI
+
+```bash
+uv tool install git+https://github.com/<user>/arxiv-paper-get
+```
+
+That's it. Two commands, one time each.
+
+### Uninstall
+
+```bash
+uv tool uninstall arxiv-paper-get
+```
+
+---
+
+## Usage
+
+```bash
+# Default: saves to ./papers/
+arxiv-paper-get "https://arxiv.org/abs/2506.01966"
+
+# Custom base directory
+arxiv-paper-get "https://arxiv.org/abs/2506.01966" "/path/to/my/papers"
+```
+
+### Output
+
+The command prints a JSON summary to stdout:
+
+```json
+{
+  "arxiv_id": "2506.01966",
+  "title": "Matrix Is All You Need",
+  "paper_dir": "papers/Matrix_Is_All_You_Need",
+  "pdf_path": "papers/Matrix_Is_All_You_Need/Matrix_Is_All_You_Need.pdf",
+  "source_path": "papers/Matrix_Is_All_You_Need/Matrix_Is_All_You_Need.tar.gz",
+  "source_extract_dir": "papers/Matrix_Is_All_You_Need/source",
+  "report_path": "papers/Matrix_Is_All_You_Need/Matrix_Is_All_You_Need_report.md",
+  "metadata_path": "papers/Matrix_Is_All_You_Need/metadata.json",
+  "pdf_ok": true,
+  "source_ok": true,
+  "source_extracted": true
+}
+```
+
+### Directory structure created
+
+```
+papers/{Paper Title}/
+├── {Paper Title}.pdf          # PDF file
+├── {Paper Title}.tar.gz       # LaTeX source tarball (if available)
+├── source/                    # Extracted LaTeX source (if available)
+│   ├── main.tex
+│   ├── sections/
+│   └── ...
+├── metadata.json              # Full paper metadata
+└── {Paper Title}_report.md    # Report skeleton for note-taking
+```
+---
+## Credits
+
+Based on the `paper-interpreter` skill by [chujianyun](https://github.com/chujianyun/skills).
+
+---
+
+---
+
+# arxiv-paper-get（中文说明）
+
+**一条命令下载 arXiv 论文 —— PDF + LaTeX 源码。**
+
+给定一个 arXiv 链接，`arxiv-paper-get` 会**并行下载**论文的 PDF 和 LaTeX 源码压缩包，
+自动将源码解压到 `source/` 目录，并创建包含元数据和 Markdown 报告骨架的本地工作区。
+
+---
+
+## 功能特性
+
+- **并行下载** — PDF 和 LaTeX 源码（`.tar.gz`）同时获取，互不等待。
+- **自动解压** — 源码包自动解压到 `source/` 子目录，内置路径穿越保护。
+- **完整元数据** — 标题、作者、摘要、分类、DOI、期刊引用等信息保存为
+  `metadata.json`（通过 arXiv 官方 API 获取）。
+- **报告骨架** — 自动生成结构化 Markdown 报告模板，已有报告不会被覆盖。
+- **零依赖** — 仅使用 Python 标准库，无需额外安装任何第三方包。
+- **跨平台** — 全面使用 `pathlib.Path`，Windows 与 Unix 路径均正确处理。
+- **优雅降级** — 如果论文的 LaTeX 源码不可用（老旧论文或部分出版社论文常见），
+  仍然会下载 PDF 并正常退出。
+
+---
+
+## 安装
+
+### 1. 安装 Claude Code Skill
+
+```bash
+npx skills add https://github.com/<user>/arxiv-paper-get
+```
+
+### 2. 安装 Python CLI
+
+```bash
+uv tool install git+https://github.com/<user>/arxiv-paper-get
+```
+
+两条命令，各执行一次即可。
+
+### 卸载
+
+```bash
+uv tool uninstall arxiv-paper-get
+```
+
+---
+
+## 用法
+
+```bash
+# 默认保存到 ./papers/
+arxiv-paper-get "https://arxiv.org/abs/2506.01966"
+
+# 指定保存目录
+arxiv-paper-get "https://arxiv.org/abs/2506.01966" "/path/to/my/papers"
+```
+
+### 输出
+
+命令执行后在 stdout 输出 JSON 摘要（见上方英文部分）。
+
+### 生成的目录结构
+
+```
+papers/{论文标题}/
+├── {论文标题}.pdf              # PDF 文件
+├── {论文标题}.tar.gz           # LaTeX 源码压缩包（如有）
+├── source/                     # 解压后的 LaTeX 源码（如有）
+│   ├── main.tex
+│   ├── sections/
+│   └── ...
+├── metadata.json               # 论文元数据
+└── {论文标题}_report.md        # 报告骨架，方便做笔记
+```
+
+---
+
+## 致谢
+
+基于 [chujianyun](https://github.com/chujianyun/skills) 的 `paper-interpreter` skill
+改写：输出英文化、并行下载、Windows 兼容、独立打包。
