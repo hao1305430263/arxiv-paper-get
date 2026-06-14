@@ -31,19 +31,31 @@ ready-to-use local workspace with metadata and a Markdown report skeleton.
 
 ## Installation
 
-### 1. Install the Claude Code skill
+### Option A: Claude Code plugin marketplace (recommended)
+
+In Claude Code, add this repo as a plugin marketplace, then install:
+
+```
+/plugin marketplace add hao1305430263/arxiv-paper-get
+/plugin install arxiv-paper-get@arxiv-paper-get
+```
+
+This installs the Claude Code plugin, which carries the `arxiv-paper-get` skill.
+Once installed, the skill auto-triggers whenever you share an arXiv link.
+
+### Option B: npx skills (cross-agent)
 
 ```bash
 npx skills add https://github.com/hao1305430263/arxiv-paper-get
 ```
 
-### 2. Install the Python CLI
+### 3. Install the Python CLI
+
+Regardless of which option you used above, also install the CLI tool:
 
 ```bash
 uv tool install git+https://github.com/hao1305430263/arxiv-paper-get
 ```
-
-That's it. Two commands, one time each.
 
 ### Uninstall
 
@@ -134,19 +146,31 @@ Based on the `paper-interpreter` skill by [chujianyun](https://github.com/chujia
 
 ## 安装
 
-### 1. 安装 Claude Code Skill
+### 方式 A：Claude Code 插件市场（推荐）
+
+在 Claude Code 中，先将本仓库添加为插件市场，然后安装：
+
+```
+/plugin marketplace add hao1305430263/arxiv-paper-get
+/plugin install arxiv-paper-get@arxiv-paper-get
+```
+
+这会安装一个 Claude Code 插件，其中包含 `arxiv-paper-get` skill。
+安装后，当你向 Claude Code 分享 arXiv 链接时，skill 会自动触发。
+
+### 方式 B：npx skills（跨 Agent）
 
 ```bash
 npx skills add https://github.com/hao1305430263/arxiv-paper-get
 ```
 
-### 2. 安装 Python CLI
+### 3. 安装 Python CLI
+
+无论选择哪种方式，都需要额外安装命令行工具：
 
 ```bash
 uv tool install git+https://github.com/hao1305430263/arxiv-paper-get
 ```
-
-两条命令，各执行一次即可。
 
 ### 卸载
 
