@@ -35,7 +35,7 @@ If the command is **not found**, do NOT proceed silently. Tell the user:
 
 > `arxiv-paper-get` is not installed yet. Install it with:
 > ```bash
-> uv tool install git+https://github.com/<user>/arxiv-paper-get
+> uv tool install git+https://github.com/hao1305430263/arxiv-paper-get
 > ```
 >
 > This only needs to be done once — it compiles the Python script into a global command.

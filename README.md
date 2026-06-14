@@ -6,6 +6,8 @@ Given an arXiv URL, `arxiv-paper-get` fetches the paper's **PDF** and **LaTeX so
 tarball in parallel**, extracts the source into a `source/` directory, and creates a
 ready-to-use local workspace with metadata and a Markdown report skeleton.
 
+> **GitHub:** [hao1305430263/arxiv-paper-get](https://github.com/hao1305430263/arxiv-paper-get)
+
 ---
 
 ## Features
@@ -32,13 +34,13 @@ ready-to-use local workspace with metadata and a Markdown report skeleton.
 ### 1. Install the Claude Code skill
 
 ```bash
-npx skills add https://github.com/<user>/arxiv-paper-get
+npx skills add https://github.com/hao1305430263/arxiv-paper-get
 ```
 
 ### 2. Install the Python CLI
 
 ```bash
-uv tool install git+https://github.com/<user>/arxiv-paper-get
+uv tool install git+https://github.com/hao1305430263/arxiv-paper-get
 ```
 
 That's it. Two commands, one time each.
@@ -94,7 +96,9 @@ papers/{Paper Title}/
 ├── metadata.json              # Full paper metadata
 └── {Paper Title}_report.md    # Report skeleton for note-taking
 ```
+
 ---
+
 ## Credits
 
 Based on the `paper-interpreter` skill by [chujianyun](https://github.com/chujianyun/skills).
@@ -109,6 +113,8 @@ Based on the `paper-interpreter` skill by [chujianyun](https://github.com/chujia
 
 给定一个 arXiv 链接，`arxiv-paper-get` 会**并行下载**论文的 PDF 和 LaTeX 源码压缩包，
 自动将源码解压到 `source/` 目录，并创建包含元数据和 Markdown 报告骨架的本地工作区。
+
+> **GitHub:** [hao1305430263/arxiv-paper-get](https://github.com/hao1305430263/arxiv-paper-get)
 
 ---
 
@@ -131,13 +137,13 @@ Based on the `paper-interpreter` skill by [chujianyun](https://github.com/chujia
 ### 1. 安装 Claude Code Skill
 
 ```bash
-npx skills add https://github.com/<user>/arxiv-paper-get
+npx skills add https://github.com/hao1305430263/arxiv-paper-get
 ```
 
 ### 2. 安装 Python CLI
 
 ```bash
-uv tool install git+https://github.com/<user>/arxiv-paper-get
+uv tool install git+https://github.com/hao1305430263/arxiv-paper-get
 ```
 
 两条命令，各执行一次即可。
