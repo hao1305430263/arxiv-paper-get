@@ -1,7 +1,7 @@
 ---
 name: arxiv-paper-get
 description: Download arXiv papers — fetches PDF + LaTeX source (.tar.gz), extracts source, creates a local workspace. Use when the user shares an arXiv URL and wants to save the paper locally.
-source: project
+source: user
 visibility: public
 ---
 
