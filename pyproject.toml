@@ -1,6 +1,6 @@
 [project]
 name = "arxiv-paper-get"
-version = "1.0.0"
+version = "1.1.0"
 description = "Download arXiv papers: PDF + LaTeX source, auto-extract, local workspace"
 requires-python = ">=3.10"
 dependencies = []   # stdlib only — zero external dependencies
