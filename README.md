@@ -4,7 +4,8 @@
 
 Given an arXiv URL, `arxiv-paper-get` fetches the paper's **PDF** and **LaTeX source
 tarball in parallel**, extracts the source into a `source/` directory, and creates a
-ready-to-use local workspace with metadata and a Markdown report skeleton.
+ready-to-use local workspace with metadata and a README that guides LLMs to the main
+document.
 
 > **GitHub:** [hao1305430263/arxiv-paper-get](https://github.com/hao1305430263/arxiv-paper-get)
 
@@ -17,8 +18,9 @@ ready-to-use local workspace with metadata and a Markdown report skeleton.
   protection.
 - **Rich metadata** — title, authors, abstract, categories, DOI, journal ref, and more
   are saved as `metadata.json` (sourced from the official arXiv API).
-- **Report skeleton** — a structured Markdown report is created if one doesn't already
-  exist (never overwrites).
+- **LLM-friendly README** — auto-generates `README.md` with the source file tree and
+  identifies the main `.tex` document, so downstream LLMs know exactly where to start
+  reading. Never overwrites an existing README.
 - **Zero dependencies** — uses only the Python standard library. No `pip install` of
   anything else required.
 - **Cross-platform** — `pathlib.Path` throughout; Windows and Unix paths are handled
@@ -85,9 +87,9 @@ The command prints a JSON summary to stdout:
   "title": "Matrix Is All You Need",
   "paper_dir": "papers/Matrix_Is_All_You_Need",
   "pdf_path": "papers/Matrix_Is_All_You_Need/Matrix_Is_All_You_Need.pdf",
-  "source_path": "papers/Matrix_Is_All_You_Need/Matrix_Is_All_You_Need.tar.gz",
+  "source_path": null,
   "source_extract_dir": "papers/Matrix_Is_All_You_Need/source",
-  "report_path": "papers/Matrix_Is_All_You_Need/Matrix_Is_All_You_Need_report.md",
+  "readme_path": "papers/Matrix_Is_All_You_Need/README.md",
   "metadata_path": "papers/Matrix_Is_All_You_Need/metadata.json",
   "pdf_ok": true,
   "source_ok": true,
@@ -105,7 +107,7 @@ papers/{Paper Title}/
 │   ├── sections/
 │   └── ...
 ├── metadata.json              # Full paper metadata
-└── {Paper Title}_report.md    # Report skeleton for note-taking
+└── README.md                  # Guides LLMs to the main .tex document
 ```
 
 > The LaTeX source tarball (`.tar.gz`) is auto-cleaned after successful extraction.
@@ -125,7 +127,7 @@ Based on the `paper-interpreter` skill by [chujianyun](https://github.com/chujia
 **一条命令下载 arXiv 论文 —— PDF + LaTeX 源码。**
 
 给定一个 arXiv 链接，`arxiv-paper-get` 会**并行下载**论文的 PDF 和 LaTeX 源码压缩包，
-自动将源码解压到 `source/` 目录，并创建包含元数据和 Markdown 报告骨架的本地工作区。
+自动将源码解压到 `source/` 目录，并创建包含元数据和 README 引导文件（指引大模型找到主 `.tex` 文档）的本地工作区。
 
 > **GitHub:** [hao1305430263/arxiv-paper-get](https://github.com/hao1305430263/arxiv-paper-get)
 
@@ -137,7 +139,8 @@ Based on the `paper-interpreter` skill by [chujianyun](https://github.com/chujia
 - **自动解压** — 源码包自动解压到 `source/` 子目录，内置路径穿越保护。
 - **完整元数据** — 标题、作者、摘要、分类、DOI、期刊引用等信息保存为
   `metadata.json`（通过 arXiv 官方 API 获取）。
-- **报告骨架** — 自动生成结构化 Markdown 报告模板，已有报告不会被覆盖。
+- **LLM 引导 README** — 自动生成 `README.md`，列出源码文件树并标注 LaTeX
+  主文档，指引大模型找到入口文件。已有 README 不会被覆盖。
 - **零依赖** — 仅使用 Python 标准库，无需额外安装任何第三方包。
 - **跨平台** — 全面使用 `pathlib.Path`，Windows 与 Unix 路径均正确处理。
 - **优雅降级** — 如果论文的 LaTeX 源码不可用（老旧论文或部分出版社论文常见），
@@ -193,21 +196,22 @@ arxiv-paper-get "https://arxiv.org/abs/2506.01966" "/path/to/my/papers"
 
 ### 输出
 
-命令执行后在 stdout 输出 JSON 摘要（见上方英文部分）。
+命令执行后在 stdout 输出 JSON 摘要（见上方英文部分，`report_path` 已改为 `readme_path`）。
 
 ### 生成的目录结构
 
 ```
 papers/{论文标题}/
 ├── {论文标题}.pdf              # PDF 文件
-├── {论文标题}.tar.gz           # LaTeX 源码压缩包（如有）
 ├── source/                     # 解压后的 LaTeX 源码（如有）
 │   ├── main.tex
 │   ├── sections/
 │   └── ...
 ├── metadata.json               # 论文元数据
-└── {论文标题}_report.md        # 报告骨架，方便做笔记
+└── README.md                   # 引导大模型找到主 .tex 文档
 ```
+
+> LaTeX 源码压缩包（`.tar.gz`）解压成功后自动删除。
 
 ---
 

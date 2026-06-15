@@ -274,48 +274,158 @@ def write_metadata(metadata: dict[str, Any], metadata_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Report skeleton
+# README.md generator (guides LLMs to the main document)
 # ---------------------------------------------------------------------------
 
 
-def write_report_skeleton(
+def _guess_main_tex(source_dir: Path) -> str | None:
+    """Guess which .tex file is the main LaTeX document.
+
+    Heuristics (tried in order):
+
+    1. Common main-document filenames: ``main.tex``, ``paper.tex``, ``article.tex``,
+       ``manuscript.tex``, ``root.tex``, ``ms.tex``, ``document.tex``, ``arxiv.tex``.
+    2. Files containing ``\\documentclass`` — if only one, that's it; if multiple,
+       the one with the most ``\\input`` / ``\\include`` calls wins (strongest
+       root-document signal).
+    3. The ``.tex`` file whose stem matches the parent directory name (e.g. a
+       conference-name file like ``aaai24.tex`` in an ``aaai24/`` source tree).
+    4. The largest ``.tex`` file that does **not** look like a section file
+       (names starting with ``sec``, ``section``, ``appendix``, ``app``, ``s_``,
+       ``ch_``, ``chapter_``).
+    5. Last resort: the first ``.tex`` file found.
+    """
+    tex_files = sorted(source_dir.rglob("*.tex"))
+    if not tex_files:
+        return None
+
+    # --- Priority 1: common main-document names (case-insensitive) -----------
+    common_names = {
+        "main.tex", "paper.tex", "article.tex", "manuscript.tex",
+        "root.tex", "ms.tex", "document.tex", "arxiv.tex",
+    }
+    for tf in tex_files:
+        if tf.name.lower() in common_names:
+            return str(tf.relative_to(source_dir))
+
+    # --- Priority 2: files containing \documentclass ------------------------
+    docclass_files: list[tuple[Path, int]] = []
+    for tf in tex_files:
+        try:
+            content = tf.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            continue
+        if r"\documentclass" not in content:
+            continue
+        input_count = len(re.findall(r"\\input\b", content))
+        include_count = len(re.findall(r"\\include\b", content))
+        docclass_files.append((tf, input_count + include_count))
+
+    if docclass_files:
+        # The file with the most \input / \include calls is almost certainly
+        # the root document.
+        docclass_files.sort(key=lambda x: x[1], reverse=True)
+        return str(docclass_files[0][0].relative_to(source_dir))
+
+    # --- Priority 3: match parent directory name ---------------------------
+    parent = source_dir.name.lower()
+    for tf in tex_files:
+        if tf.stem.lower() == parent:
+            return str(tf.relative_to(source_dir))
+
+    # --- Priority 4: largest .tex file that doesn't look like a section ----
+    section_re = re.compile(
+        r"^(sec|section|appendix|app|s|ch|chapter)[\W_]", re.IGNORECASE
+    )
+    candidates: list[tuple[Path, int]] = []
+    for tf in tex_files:
+        if not section_re.match(tf.name):
+            candidates.append((tf, tf.stat().st_size))
+
+    if candidates:
+        candidates.sort(key=lambda x: x[1], reverse=True)
+        return str(candidates[0][0].relative_to(source_dir))
+
+    # --- Priority 5: first .tex file ---------------------------------------
+    return str(tex_files[0].relative_to(source_dir))
+
+
+def _generate_file_tree(
+    directory: Path,
+    max_depth: int = 4,
+    max_entries: int = 300,
+) -> str:
+    """Generate an ASCII file tree of *directory*."""
+
+    lines: list[str] = []
+
+    def _walk(current: Path, prefix: str = "", depth: int = 0) -> None:
+        if depth > max_depth:
+            lines.append(f"{prefix}... (max depth reached)")
+            return
+        if len(lines) >= max_entries:
+            return
+
+        entries = sorted(current.iterdir())
+        for i, entry in enumerate(entries):
+            if len(lines) >= max_entries:
+                lines.append(f"{prefix}... (truncated)")
+                return
+
+            is_last = i == len(entries) - 1
+            connector = "└── " if is_last else "├── "
+            if entry.is_dir():
+                lines.append(f"{prefix}{connector}{entry.name}/")
+                extension = "    " if is_last else "│   "
+                _walk(entry, prefix + extension, depth + 1)
+            else:
+                lines.append(f"{prefix}{connector}{entry.name}")
+
+    lines.append(f"{directory.name}/")
+    _walk(directory)
+    return "\n".join(lines)
+
+
+def write_readme(
     metadata: dict[str, Any],
-    report_path: Path,
-) -> None:
-    """Create a structured Markdown report skeleton for note-taking."""
-    # Never overwrite an existing report
-    if report_path.exists():
-        return
+    paper_dir: Path,
+    source_dir: Path | None,
+    pdf_path: str | None,
+) -> Path:
+    """Create ``README.md`` in *paper_dir* that guides LLMs to the main document.
+
+    * If LaTeX source was extracted, lists the file tree and guesses which
+      ``.tex`` file is the root document.
+    * If only a PDF is available, tells the LLM to use the PDF.
+    * Never overwrites an existing ``README.md``.
+    """
+    readme_path = paper_dir / "README.md"
+    if readme_path.exists():
+        return readme_path
 
     title = metadata.get("title", "Untitled")
     authors = ", ".join(metadata.get("authors", []))
-    abstract = metadata.get("abstract", "")
     arxiv_id = metadata.get("arxiv_id", "")
+    abstract = metadata.get("abstract", "")
     published = metadata.get("published", "")
     doi = metadata.get("doi", "")
     categories = ", ".join(metadata.get("categories", []))
-    primary = metadata.get("primary_category", "")
-    journal_ref = metadata.get("journal_ref", "")
 
-    lines = [
+    lines: list[str] = [
         f"# {title}",
         "",
-        f"**arXiv ID:** [{arxiv_id}](https://arxiv.org/abs/{arxiv_id})",
-        f"**Authors:** {authors}",
-        f"**Published:** {published}",
+        "## Paper Info",
+        "",
+        f"- **arXiv ID:** [{arxiv_id}](https://arxiv.org/abs/{arxiv_id})",
+        f"- **Authors:** {authors}",
+        f"- **Published:** {published}",
     ]
-    if primary:
-        lines.append(f"**Primary Category:** {primary}")
     if categories:
-        lines.append(f"**Categories:** {categories}")
-    if journal_ref:
-        lines.append(f"**Journal Ref:** {journal_ref}")
+        lines.append(f"- **Categories:** {categories}")
     if doi:
-        lines.append(f"**DOI:** [{doi}](https://doi.org/{doi})")
+        lines.append(f"- **DOI:** [{doi}](https://doi.org/{doi})")
 
     lines += [
-        "",
-        "---",
         "",
         "## Abstract",
         "",
@@ -323,54 +433,80 @@ def write_report_skeleton(
         "",
         "---",
         "",
-        "## Summary",
-        "",
-        "<!-- Write a 2-3 sentence summary of the key contribution here -->",
-        "",
-        "---",
-        "",
-        "## Core Idea",
-        "",
-        "<!-- What is the main insight or approach? -->",
-        "",
-        "---",
-        "",
-        "## Technical Details",
-        "",
-        "<!-- Key equations, algorithms, architectures, proofs -->",
-        "",
-        "---",
-        "",
-        "## Experiments & Results",
-        "",
-        "<!-- Key findings, benchmarks, ablations -->",
-        "",
-        "",
-        "---",
-        "",
-        "## Key Takeaways",
-        "",
-        "- ",
-        "- ",
-        "- ",
-        "",
-        "---",
-        "",
-        "## Questions / Open Issues",
-        "",
-        "- ",
-        "- ",
-        "",
-        "---",
-        "",
-        "## References to Follow Up",
-        "",
-        "- ",
-        "- ",
+        "## Main Document",
         "",
     ]
 
-    report_path.write_text("\n".join(lines), encoding="utf-8")
+    # --- Source available: guess main .tex and show file tree --------------
+    source_available = source_dir is not None and source_dir.exists()
+    if source_available:
+        main_tex = _guess_main_tex(source_dir)
+        if main_tex:
+            lines.append(
+                f"** `source/{main_tex}`** is the LaTeX main document."
+            )
+            lines.append("")
+            lines.append(
+                "Read this file first to understand the paper structure, "
+                "then follow `\\input` / `\\include` references to other "
+                "`.tex` files as needed."
+            )
+        else:
+            lines.append(
+                "No `.tex` file found in `source/` — the source may use a "
+                "different format."
+            )
+
+        lines += [
+            "",
+            "## Source File Structure",
+            "",
+        ]
+        tree = _generate_file_tree(source_dir)
+        lines.append(tree)
+        lines.append("")
+
+    # --- Source NOT available: guide to PDF --------------------------------
+    else:
+        lines.append("LaTeX source is **not available** for this paper.")
+        lines.append("")
+        if pdf_path:
+            lines.append(
+                f"Use the PDF instead: `{Path(pdf_path).name}`"
+            )
+        else:
+            lines.append(
+                "No PDF available either — only metadata is present."
+            )
+        lines.append("")
+
+    # --- General workspace guidance ----------------------------------------
+    lines += [
+        "---",
+        "",
+        "## How to Use This Workspace",
+        "",
+    ]
+    if source_available and source_dir is not None and _guess_main_tex(source_dir):
+        lines += [
+            "1. Read the main `.tex` file listed in **Main Document** above — "
+            "it contains the full paper text.",
+            "2. Follow `\\input`/`\\include` references to other `.tex` files.",
+            "3. Figures (`.pdf`/`.png`) are referenced from the LaTeX source.",
+            "4. `metadata.json` has structured metadata (title, authors, DOI, "
+            "categories, etc.).",
+        ]
+    else:
+        lines += [
+            "1. If only a PDF is available, extract text using a PDF→markdown "
+            "conversion tool.",
+            "2. `metadata.json` has structured metadata (title, authors, DOI, "
+            "categories, etc.).",
+        ]
+    lines.append("")
+
+    readme_path.write_text("\n".join(lines), encoding="utf-8")
+    return readme_path
 
 
 #
@@ -451,21 +587,22 @@ def main(argv: list[str] | None = None) -> int:
     # --- Step 3: extract source tarball ---
     source_extract_dir = maybe_extract_source(source_path, paper_dir)
 
-    # --- Step 4: write metadata and report skeleton ---
-    report_filename = safe_filename(title, arxiv_id, "_report.md")
-    report_path = paper_dir / report_filename
-
+    # --- Step 4: write metadata and README ---
     metadata["paper_dir"] = str(paper_dir)
     metadata["pdf_path"] = str(pdf_path) if pdf_path else None
     metadata["source_path"] = str(source_path) if source_path else None
     metadata["source_extract_dir"] = (
         str(source_extract_dir) if source_extract_dir else None
     )
-    metadata["report_path"] = str(report_path)
     metadata["downloaded_at"] = datetime.now(timezone.utc).isoformat()
 
     write_metadata(metadata, paper_dir / "metadata.json")
-    write_report_skeleton(metadata, report_path)
+    readme_path = write_readme(
+        metadata,
+        paper_dir,
+        source_extract_dir,
+        metadata["pdf_path"],
+    )
 
     # --- Step 5: print result summary as JSON ---
     result = {
@@ -475,7 +612,7 @@ def main(argv: list[str] | None = None) -> int:
         "pdf_path": str(pdf_path) if pdf_path else None,
         "source_path": str(source_path) if source_path else None,
         "source_extract_dir": str(source_extract_dir) if source_extract_dir else None,
-        "report_path": str(report_path),
+        "readme_path": str(readme_path),
         "metadata_path": str(paper_dir / "metadata.json"),
         "pdf_ok": pdf_path is not None,
         "source_ok": source_path is not None,

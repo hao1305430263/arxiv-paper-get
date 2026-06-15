@@ -7,7 +7,7 @@ description: Download arXiv papers — fetches PDF + LaTeX source (.tar.gz), ext
 
 Download an arXiv paper to a local workspace. Fetches **both** PDF and LaTeX source
 (`.tar.gz`) in parallel, extracts the source into a `source/` subdirectory, and writes
-a metadata file + report skeleton.
+a metadata file + README that guides LLMs to the main `.tex` document.
 
 ## Detection
 
@@ -73,7 +73,7 @@ The command prints a JSON object to stdout on success. Key fields:
 | `pdf_path`           | Path to the downloaded PDF (or `null`)                              |
 | `source_path`        | Path to the source tarball (or `null`)                              |
 | `source_extract_dir` | Path to extracted source, typically `paper_dir/source/` (or `null`) |
-| `report_path`        | Path to the report skeleton `.md`                                   |
+| `readme_path`        | Path to the generated `README.md`                                   |
 | `pdf_ok`             | `true` if PDF downloaded successfully                               |
 | `source_ok`          | `true` if LaTeX source downloaded successfully                      |
 | `source_extracted`   | `true` if source was extracted                                      |
@@ -86,7 +86,7 @@ After the command finishes, summarize:
 📥 Downloaded: {title}
 📄 PDF: {pdf_path or "not available"}
 📦 Source: {source_extract_dir or "not available"}
-📝 Report skeleton: {report_path}
+📝 README: {readme_path}
 ```
 
 If the source tarball was not available (common for older papers), note it:
@@ -102,7 +102,7 @@ papers/{Paper Title}/
 │   ├── main.tex
 │   └── ...
 ├── metadata.json              # Full paper metadata
-└── {Paper Title}_report.md    # Report skeleton for note-taking
+└── README.md                  # Guides LLMs to the main .tex document
 ```
 
 The LaTeX source tarball is **auto-cleaned** after successful extraction.
@@ -112,7 +112,7 @@ If extraction fails, the tarball is kept for manual inspection.
 
 - **TeX source** may not be available for all arXiv papers (pre-2000, some publishers).
   The tool handles this gracefully — PDF is still downloaded.
-- **Write conflicts**: the tool never overwrites an existing report file.
+- **Write conflicts**: the tool never overwrites an existing README.
 - **Windows paths**: fully supported; the tool uses `pathlib.Path` throughout.
   Path-traversal guards use `Path.relative_to()` for cross-platform safety.
 - **Offline**: the tool requires network access to `arxiv.org` and `export.arxiv.org`.
@@ -128,5 +128,5 @@ Agent: *runs `arxiv-paper-get "https://arxiv.org/abs/2506.01966"`*
 📥 Downloaded: Matrix Is All You Need
 📄 PDF: papers/Matrix_Is_All_You_Need/Matrix_Is_All_You_Need.pdf
 📦 Source: papers/Matrix_Is_All_You_Need/source/
-📝 Report skeleton: papers/Matrix_Is_All_You_Need/Matrix_Is_All_You_Need_report.md
+📝 README: papers/Matrix_Is_All_You_Need/README.md
 ```
